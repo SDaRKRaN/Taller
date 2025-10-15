@@ -1,0 +1,53 @@
+name: Manual Run (main.py / app.py)
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Qué script ejecutar"
+        required: true
+        default: "main"
+        type: choice
+        options: ["main", "app"]
+      args:
+        description: "Argumentos opcionales para el script (ej: --dry-run)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # Carga de variables opcionales desde secretos
+      # Configura en GitHub -> Settings -> Secrets and variables -> Actions
+      # Por ejemplo: DB_PATH, API_BASE_URL, etc.
+      - name: Export secrets (si existen)
+        run: |
+          echo "Exportando variables..."
+          for v in DB_PATH API_BASE_URL API_TOKEN; do
+            if [ -n "${{ secrets[v] }}" ]; then
+              echo "$v=${{ secrets[v] }}" >> $GITHUB_ENV
+            fi
+          done
+
+      - name: Run selected script
+        run: |
+          if [ "${{ inputs.script }}" = "main" ]; then
+            python main.py ${{ inputs.args }}
+          else
+            python app.py ${{ inputs.args }}
+          fi
