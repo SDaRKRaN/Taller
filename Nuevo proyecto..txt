@@ -1,0 +1,78 @@
+APP DE ESCRITORIO – ADMINISTRACIÓN
+Objetivo: Planificar avisos por técnico, turno y día desde una interfaz tipo calendario. Generar archivos JSON para sincronización con la app del técnico.
+
+Funciones principales:
+Vista calendario mensual/semanal con selección por día.
+
+Filtros por técnico y turno (mañana/tarde).
+
+Carga de avisos con los siguientes campos:
+
+Cliente, dirección, teléfono
+
+Tipo de servicio
+
+Orden de trabajo
+
+Margen horario
+
+Cobro (importe, moneda, debe cobrar)
+
+Equipos (múltiples, cada uno con 2–3 fotos)
+
+Documentos (factura, parte firmado)
+
+Firma del cliente (si ya está disponible)
+
+Notas logísticas
+
+Observaciones técnicas
+
+Estado del aviso (pendiente, completado, cancelado)
+
+Edición de avisos existentes.
+
+Reasignación de avisos a otro día o turno (drag & drop o menú).
+
+Duplicación de avisos.
+
+Exportación de rutas por técnico y día en formato JSON.
+
+Guardado en carpeta compartida (ej. Google Drive, Dropbox, FTP).
+
+Validación visual de campos antes de exportar.
+
+📱 APP MÓVIL – TÉCNICO
+Objetivo: Consultar avisos asignados, registrar ejecución, adjuntar fotos, documentos y firma del cliente. Sincronizar resultados.
+
+Funciones principales:
+Lectura de archivo JSON por técnico y día desde carpeta compartida.
+
+Visualización de avisos con todos los campos cargados.
+
+Acceso a fotos por equipo y documentos adjuntos.
+
+Captura de nuevas fotos (antes/después).
+
+Escaneo o carga de parte firmado.
+
+Firma digital del cliente en pantalla táctil.
+
+Registro de hora de llegada y finalización.
+
+Validación de cobro (importe, método, observaciones).
+
+Cambio de estado del aviso (completado, cancelado, reprogramado).
+
+Guardado de resultados en carpeta /Completados/ o /Logs/.
+
+📂 Sincronización entre ambas apps
+Carpeta compartida estructurada por fecha y técnico:
+
+/Rutas/2025-10-14/Carlos-mañana.json
+
+/Completados/2025-10-14/Carlos-mañana_resultado.json
+
+No requiere servidor web ni base de datos externa.
+
+Posibilidad de migrar a API REST o Firebase en el futuro si se desea escalar.

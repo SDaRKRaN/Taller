@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Aviso</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 40px;
+            color: #2c3e50;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #34495e;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #16a085;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>✏️ Editar Aviso {{ aviso.reparacion or aviso.ordenInterna }}</h2>
+        <form method="POST" action="/guardar/{{ aviso.reparacion or aviso.ordenInterna }}">
+            <label for="cliente">Cliente</label>
+            <input type="text" id="cliente" name="cliente" value="{{ aviso.cliente or (aviso.NOMBRE ~ ' ' ~ aviso.APEL1) }}">
+
+            <label for="direccion">Dirección</label>
+            <input type="text" id="direccion" name="direccion" value="{{ aviso.direccion or aviso.DIRECCION }}">
+
+            <label for="localidad">Localidad</label>
+            <input type="text" id="localidad" name="localidad" value="{{ aviso.localidad or aviso.LOCALIDAD }}">
+
+            <label for="aparato">Aparato</label>
+            <input type="text" id="aparato" name="aparato" value="{{ aviso.aparato or aviso.APARATO }}">
+
+            <label for="marca">Marca</label>
+            <input type="text" id="marca" name="marca" value="{{ aviso.marca or aviso.MARCA }}">
+
+            <label for="modelo">Modelo</label>
+            <input type="text" id="modelo" name="modelo" value="{{ aviso.modelo or aviso.MODELO }}">
+
+            <button type="submit">💾 Guardar cambios</button>
+        </form>
+    </div>
+</body>
+</html>

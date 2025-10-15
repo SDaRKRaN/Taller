@@ -1,0 +1,15 @@
+
+Campo Excel	Uso en la app de escritorio
+Id	Identificador interno (opcional) --- OK, puede ser util
+NOMBRE + apel1	Nombre completo del cliente -> Perfecto
+DIRECCION	Dirección del aviso -> Perfecto
+LOCALIDAD	Localidad -> Perfecto
+CODIGOPOSTAL	Código postal -> Perfecto
+TELE1 / TELE2	Teléfonos de contacto -> Perfecto
+aparato	Código interno del equipo -  Estos codigos hay que capturarlos y usarios para identificar el proveedor de servicios
+marca	Tipo de aparato (TV, audio, PC, etc.) -> Este campo lo capturamos, pero puede ser en blanco o nombre de proveedor de servicios.
+modelo	Modelo específico del equipo -> Normalmente en Blanco, se ha asignado y posiblemente aun no visitado
+fecha1	Fecha prevista de visita - > incorrecto, es la fecha de creacion o  asignacion del caso
+averia2	Descripción de la avería , lo que indica el cliente y alguna instruccion
+reparacion	Código de parte técnico / orden interna -> Es el numero de orden unico de nuestros sistemas
+FINAL	Observaciones finales (si aplica) -> Esta fecha no es necesaria añadirla como importacion, se usa para filtrar casos finalizados y desatenderlos.

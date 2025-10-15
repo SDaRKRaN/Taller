@@ -1,0 +1,32 @@
+cat > .gitignore << "EOF"
+# Entornos y caches
+venv/
+.venv/
+__pycache__/
+*.pyc
+# Entornos y cachés
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Datos / binarios locales
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.bak
+*.tmp
+*.xlsx
+*.csv
+
+# Ejecutables/bibliotecas
+*.exe
+*.dll
+*.pak
+
+# IDE / sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

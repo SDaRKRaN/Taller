@@ -1,0 +1,210 @@
+from datetime import datetime, time
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QLabel, QHBoxLayout, QPushButton,
+    QListWidget, QListWidgetItem, QWidget, QMenu, QFileDialog, QMessageBox, QApplication
+)
+from PySide6.QtCore import Qt
+import json
+import db
+
+class PlanificadorDia(QDialog):
+    def __init__(self, fecha, parent=None):
+        super().__init__(parent)
+        self.fecha = fecha  # string "yyyy-MM-dd"
+        self.setWindowTitle(f"Planificador {fecha}")
+        self.resize(900, 600)
+        self._build_ui()
+        self._cargar_avisos()
+
+    def _build_ui(self):
+        self.layout = QVBoxLayout(self)
+
+        header = QLabel(f"Planificador para {self.fecha}")
+        header.setAlignment(Qt.AlignCenter)
+        header.setStyleSheet("font-weight:bold; font-size:16px; margin:8px;")
+        self.layout.addWidget(header)
+
+        tool_layout = QHBoxLayout()
+        self.btn_editar = QPushButton("Editar")
+        self.btn_asignar = QPushButton("Asignar a seleccionados")
+        self.btn_exportar = QPushButton("Exportar seleccionados")
+        self.btn_refrescar = QPushButton("Refrescar")
+        tool_layout.addWidget(self.btn_editar)
+        tool_layout.addWidget(self.btn_asignar)
+        tool_layout.addWidget(self.btn_exportar)
+        tool_layout.addStretch()
+        tool_layout.addWidget(self.btn_refrescar)
+        self.layout.addLayout(tool_layout)
+
+        self.lista = QListWidget()
+        self.lista.setSelectionMode(QListWidget.ExtendedSelection)
+        self.layout.addWidget(self.lista)
+
+        self.lista.itemDoubleClicked.connect(self._on_item_double)
+        self.lista.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.lista.customContextMenuRequested.connect(self._on_context_menu)
+        self.btn_editar.clicked.connect(self._editar_seleccion)
+        self.btn_asignar.clicked.connect(self._asignar_seleccionados)
+        self.btn_exportar.clicked.connect(self._exportar_seleccionados)
+        self.btn_refrescar.clicked.connect(self._cargar_avisos)
+
+    def _cargar_avisos(self):
+        self.lista.clear()
+        try:
+            avisos = db.obtener_avisos_por_fecha(self.fecha)
+        except Exception:
+            avisos = []
+
+        for aviso in avisos:
+            orden = aviso.get("ordenTrabajo") or aviso.get("ordenInterna") or ""
+            cliente = (aviso.get("cliente") or "").strip()
+            direccion = (aviso.get("direccion") or "").strip()
+            hi = (aviso.get("horaInicio") or "").strip()
+            hf = (aviso.get("horaFin") or "").strip()
+            turno = aviso.get("turno") or ""
+            tecnico = aviso.get("tecnico") or ""
+            estado = aviso.get("estado") or ""
+            tipoOperacion = aviso.get("tipoOperacion") or ""
+            telefono = aviso.get("telefono") or aviso.get("telefono1") or ""
+
+            label = f"{orden} — {cliente or 'sin cliente'} — {direccion}"
+            detalles = []
+
+            if tipoOperacion:
+                detalles.append(tipoOperacion)
+            if estado:
+                detalles.append(estado)
+            if turno or hi or hf:
+                detalles.append(f"{turno or ''} {hi or ''}–{hf or ''}".strip())
+            if tecnico:
+                detalles.append(f"Técnico: {tecnico}")
+            if telefono:
+                detalles.append(f"Tel: {telefono}")
+
+            if detalles:
+                label += "\n  " + " | ".join(detalles)
+
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, aviso)
+            self.lista.addItem(item)
+
+    def _get_selected_aviso_dicts(self):
+        return [it.data(Qt.UserRole) for it in self.lista.selectedItems()]
+
+    def _on_item_double(self, item):
+        aviso = item.data(Qt.UserRole)
+        self._abrir_editor(aviso)
+
+    def _editar_seleccion(self):
+        items = self._get_selected_aviso_dicts()
+        if not items:
+            QMessageBox.information(self, "Editar", "Selecciona al menos un aviso")
+            return
+        self._abrir_editor(items[0])
+
+    def _abrir_editor(self, aviso):
+        try:
+            from editar_aviso_dialog import EditarAvisoDialog
+        except Exception:
+            QMessageBox.critical(self, "Error", "No se encuentra EditarAvisoDialog")
+            return
+
+        def guardar_cb(datos):
+            merged = aviso.copy()
+            merged.update(datos)
+            if "ordenTrabajo" in merged and "ordenInterna" not in merged:
+                merged["ordenInterna"] = merged["ordenTrabajo"]
+            try:
+                db.actualizar_aviso(merged)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error guardando aviso: {e}")
+                return
+            self._cargar_avisos()
+            self._notificar_refresco_parent()
+
+        dlg = EditarAvisoDialog(aviso, guardar_cb, parent=self)
+        dlg.exec()
+
+    def _asignar_seleccionados(self):
+        items = self._get_selected_aviso_dicts()
+        if not items:
+            QMessageBox.information(self, "Asignar", "Selecciona avisos para asignar")
+            return
+        from PySide6.QtWidgets import QDialog, QFormLayout, QDateEdit, QComboBox, QTimeEdit
+        from PySide6.QtCore import QDate, QTime
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Asignar a seleccionados")
+        form = QFormLayout(dlg)
+        date_edit = QDateEdit(QDate.fromString(self.fecha, "yyyy-MM-dd"))
+        date_edit.setDisplayFormat("yyyy-MM-dd")
+        combo_turno = QComboBox()
+        combo_turno.addItems(["", "mañana", "tarde"])
+        time_inicio = QTimeEdit()
+        time_inicio.setDisplayFormat("HH:mm")
+        time_fin = QTimeEdit()
+        time_fin.setDisplayFormat("HH:mm")
+        form.addRow("Fecha:", date_edit)
+        form.addRow("Turno:", combo_turno)
+        form.addRow("Hora inicio (opcional):", time_inicio)
+        form.addRow("Hora fin (opcional):", time_fin)
+        btn_ok = QPushButton("Aplicar")
+        btn_cancel = QPushButton("Cancelar")
+        btn_box = QHBoxLayout()
+        btn_box.addWidget(btn_ok); btn_box.addWidget(btn_cancel)
+        form.addRow(btn_box)
+        btn_ok.clicked.connect(dlg.accept)
+        btn_cancel.clicked.connect(dlg.reject)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        fecha_nueva = date_edit.date().toString("yyyy-MM-dd")
+        try:
+            dia_sem = datetime.strptime(fecha_nueva, "%Y-%m-%d").isoweekday()
+            if dia_sem in (6, 7):
+                QMessageBox.warning(self, "Asignar", "No se permiten asignaciones en fines de semana (sábado o domingo).")
+                return
+        except Exception:
+            QMessageBox.warning(self, "Asignar", "Fecha inválida.")
+            return
+
+        turno = combo_turno.currentText() or None
+        hi = time_inicio.time().toString("HH:mm") if time_inicio.time().isValid() else None
+        hf = time_fin.time().toString("HH:mm") if time_fin.time().isValid() else None
+
+        errores = []
+        for aviso in items:
+            try:
+                orden_key = aviso.get("ordenTrabajo") or aviso.get("ordenInterna")
+                db.actualizar_aviso_campos_basicos(
+                    ordenInterna=orden_key,
+                    cliente=None,
+                    horaInicio=hi,
+                    horaFin=hf,
+                    tecnico=None,
+                    turno=turno,
+                    fechaVisita=fecha_nueva
+                )
+            except Exception as e:
+                errores.append(f"{orden_key}: {e}")
+        self._cargar_avisos()
+        self._notificar_refresco_parent()
+        if errores:
+            QMessageBox.warning(self, "Asignar", "Algunos avisos no se actualizaron:\n" + "\n".join(errores))
+        else:
+            QMessageBox.information(self, "Asignar", "Asignación completada")
+
+def _exportar_seleccionados(self):
+    items = self._get_selected_aviso_dicts()
+    if not items:
+        QMessageBox.information(self, "Exportar", "Selecciona avisos para exportar")
+        return
+
+    ruta, _ = QFileDialog.getSaveFileName(self, "Exportar a JSON", "export_aviso.json", "JSON Files (*.json)")
+    if not ruta:
+        return
+
+    try:
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(items, f, ensure_ascii=False, indent=2)
+        QMessageBox.information(self, "Exportar", f"Exportados {len(items)} avisos a {ruta}")
+    except Exception as e:
+        QMessageBox.critical(self, "Exportar", f"Error exportando: {e}")

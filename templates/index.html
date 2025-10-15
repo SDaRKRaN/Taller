@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Revisión de Avisos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+            color: #2c3e50;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #34495e;
+        }
+
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        label {
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            margin-right: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #16a085;
+        }
+
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: #2c3e50;
+            color: white;
+            z-index: 1;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .duplicado {
+            background-color: #ffe6e6;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .importar-btn {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function toggleAll(source) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:disabled)');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+    </script>
+</head>
+<body>
+    <h2>📋 Revisión de Avisos desde Excel</h2>
+
+    <!-- Filtros -->
+    <form method="GET" action="/">
+        <label for="localidad">Localidad:</label>
+        <input type="text" id="localidad" name="localidad" value="{{ request.args.get('localidad', '') }}">
+        <label for="tecnico">Técnico:</label>
+        <input type="text" id="tecnico" name="tecnico" value="{{ request.args.get('tecnico', '') }}">
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <!-- Tabla de avisos -->
+    <form method="POST" action="/importar">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" onclick="toggleAll(this)"></th>
+                        <th>Orden</th>
+                        <th>Cliente</th>
+                        <th>Aparato</th>
+                        <th>Localidad</th>
+                        <th>Duplicado</th>
+                        <th>Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aviso in avisos %}
+                    <tr class="{{ 'duplicado' if aviso.duplicado }}">
+                        <td><input type="checkbox" name="seleccion" value="{{ aviso.reparacion }}" {% if aviso.duplicado %}disabled{% endif %}></td>
+                        <td>{{ aviso.reparacion }}</td>
+                        <td>{{ aviso.NOMBRE }} {{ aviso.apel1 }}</td>
+                        <td>{{ aviso.aparato }}</td>
+                        <td>{{ aviso.LOCALIDAD }}</td>
+                        <td>{{ 'Sí' if aviso.duplicado else 'No' }}</td>
+                        <td><a href="/editar/{{ aviso.reparacion }}">Editar</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="importar-btn">
+            <button type="submit">Importar seleccionados</button>
+        </div>
+    </form>
+</body>
+</html>
